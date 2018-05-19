@@ -2,6 +2,29 @@ require('dotenv').config();
 var createHandler = require('github-webhook-handler');
 var createApp = require('github-app'); 
 var http = require('http');
+
+
+// SLACK
+
+const { IncomingWebhook, WebClient } = require('@slack/client');
+const timeNotification = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
+const currentTime = new Date().toTimeString();
+
+timeNotification.send(`The current time is ${currentTime}`, (error, resp) => {
+  if (error) {
+    return console.error(error);
+  }
+  console.log('Notification sent');
+});
+
+const issueNotification = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
+
+
+
+// GITHUB
+
+console.log('Getting Started');
+
  
 var app = createApp({
   id: process.env.APP_ID,
@@ -19,6 +42,15 @@ handler.on('issues', function(event) {
     event.payload.action,
     event.payload.issue.number,
     event.payload.issue.title)
+
+  issueNotification.send(`${event.payload.repository.name + event.payload.action + event.payload.issue.number + event.payload.issue.title}`,
+    (error, resp) => {
+      if (error) {
+        return console.error(error);
+      }
+      console.log('Issue Notification Sent');
+    })
+
   if (event.payload.action === 'opened') {
     var installation = event.payload.installation.id;
 
